@@ -1,0 +1,28 @@
+{
+  "name": "mqtt-yahoo-quotes",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "git-pull": "git pull",
+    "git-commit": "git add -A && git commit -m '-' && git push",
+    "git-revert": "git reset --hard HEAD"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/meg768/mqtt-yahoo-quotes.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/meg768/mqtt-yahoo-quotes/issues"
+  },
+  "homepage": "https://github.com/meg768/mqtt-yahoo-quotes#readme",
+  "dependencies": {
+    "dotenv": "^8.2.0",
+    "mqtt-ex": "^1.0.6",
+    "yahoo-finance": "^0.3.7",
+    "yargs": "^16.2.0",
+    "yow": "^1.0.108"
+  }
+}
