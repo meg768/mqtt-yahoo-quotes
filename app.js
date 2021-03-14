@@ -7,7 +7,7 @@ var MQTT = require('mqtt-ex');
 
 
 require('dotenv').config();
-
+require('yow/prefixConsole')();
 
 class App {
 
@@ -22,7 +22,7 @@ class App {
 		yargs.option('username', {describe:'User name for MQTT broker', default:process.env.MQTT_USERNAME});
 		yargs.option('port',     {describe:'Port for MQTT', default:process.env.MQTT_PORT});
 		yargs.option('topic',    {describe:'MQTT root topic', default:process.env.MQTT_TOPIC});
-		yargs.option('debug',    {describe:'Debug mode', type:'boolean', default:false});
+		yargs.option('debug',    {describe:'Debug mode', type:'boolean', default:process.env.DEBUG == '1'});
 
 		yargs.help();
 		yargs.wrap(null);
@@ -32,7 +32,8 @@ class App {
 		});
 
 		this.argv    = yargs.argv;
-		this.debug   = this.argv.debug ? console.log : () => {};
+		this.log     = console.log;
+		this.debug   = this.argv.debug ? this.log : () => {};
 		this.quotes  = {};
 		this.config  = {};
 		this.timer   = new Timer();
@@ -86,9 +87,9 @@ class App {
 
 
 	async loop() {
-		this.debug(`Updating quotes...`);
+		this.log(`Updating quotes...`);
 		this.quotes = await this.fetch();
-		setTimeout(this.loop.bind(this), 1000 * 60 * 5);
+		setTimeout(this.loop.bind(this), 1000 * 60 * 1);
 	}
 
 	publish(topic, value) {
@@ -126,7 +127,7 @@ class App {
 			this.mqtt = MQTT.connect(argv.host, {username:argv.username, password:argv.password, port:argv.port});
 			
 			this.mqtt.on('connect', () => {
-				this.debug(`Connected to host ${argv.host}:${argv.port}.`);
+				this.log(`Connected to host ${argv.host}:${argv.port}.`);
 			});
 
 			this.mqtt.subscribe(`${this.argv.topic}/+`);
@@ -135,17 +136,18 @@ class App {
 
 				try {
 					if (message == '') {
-						this.debug(`Removed topic ${topic}...`);
+						this.log(`Removed symbol ${args.name}.`);
 						delete this.entries[args.name];
 					}
 					else {
 						try {
 							let config = JSON.parse(message);
+							this.log(`Added symbol ${args.name}:${JSON.stringify(config)}...`);
 							this.entries[args.name] = {symbol:config.symbol, name:args.name, quote:{}};
 
 							this.timer.setTimer(1000, () => {
 								this.update();
-							})
+							});
 						}
 						catch(error) {
 							throw new Error(`Invalid configuration "${message}".`);
@@ -157,7 +159,7 @@ class App {
 	
 				}
 				catch(error) {
-					this.debug(error);
+					this.log(error);
 				}
 
 			});
