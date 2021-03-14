@@ -89,7 +89,7 @@ class App {
 	async loop() {
 		this.log(`Updating quotes...`);
 		this.quotes = await this.fetch();
-		setTimeout(this.loop.bind(this), 1000 * 60 * 1);
+		setTimeout(this.loop.bind(this), 1000 * 60 * 15);
 	}
 
 	publish(topic, value) {
