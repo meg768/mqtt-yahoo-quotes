@@ -57,13 +57,16 @@ class App {
 		let data = await yahoo.quote(params);
 		let quotes = {};
 
-		symbols.forEach((symbol) => {
-			var {regularMarketChangePercent:change, regularMarketTime:time, regularMarketPrice:price, shortName:name} = data[symbol].price;
+		this.debug(data);
 
-			var quote = {symbol:symbol, change:change * 100, price:price, name:name, time:time};
+		symbols.forEach((symbol) => {
+			var {quoteType:type, currency:currency, marketState:state, regularMarketChangePercent:change, regularMarketTime:time, regularMarketPrice:price, shortName:name} = data[symbol].price;
+
+			var quote = {symbol:symbol, type:type, currency:currency, state:state, change:change * 100, price:price, name:name, time:time};
 
 			// Round change in percent
-			quote.change = Math.floor(quote.change * 100 + 0.5) / 100;
+			quote.change = Math.floor(quote.change * 10 + 0.5) / 10;
+			quote.price = Math.floor(quote.price * 100 + 0.5) / 100;
 
 			quotes[symbol] = quote;
 		});
