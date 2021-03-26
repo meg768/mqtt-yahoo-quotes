@@ -57,8 +57,6 @@ class App {
 		let data = await yahoo.quote(params);
 		let quotes = {};
 
-		this.debug(data);
-
 		symbols.forEach((symbol) => {
 			var {quoteType:type, currency:currency, marketState:state, regularMarketChangePercent:change, regularMarketTime:time, regularMarketPrice:price, shortName:name} = data[symbol].price;
 
@@ -80,18 +78,16 @@ class App {
 		let symbols = [];
 
 		Object.keys(this.entries).forEach((name) => {
-			let entry = this.entries[name];
 			symbols.push(this.entries[name].symbol);
-
 		});
 
-		return await this.fetchQuotes(symbols);
+		this.quotes = await this.fetchQuotes(symbols); 
+
 	}
 
 
 	async loop() {
-		this.log(`Updating quotes...`);
-		this.quotes = await this.fetch();
+		await this.fetch();	 
 		setTimeout(this.loop.bind(this), 1000 * 60 * 15);
 	}
 
@@ -101,16 +97,17 @@ class App {
 		this.mqtt.publish(topic, value, {retain:true});
 	}
 
-	async update() {
 
-		this.quotes = await this.fetch();
+	publishQuotes() {
 
 		Object.keys(this.entries).forEach((name) => {
 			let entry = this.entries[name];
 			let quote = this.quotes[entry.symbol];
 
 			if (quote != undefined) {
-				if (entry.quote == undefined || entry.quote.price != quote.price) {
+				if (entry.quote == undefined || JSON.stringify(entry.quote) != JSON.stringify(quote)) {
+
+					this.debug(`Symbol ${entry.symbol} changed.`);
 
 					Object.keys(quote).forEach((key) => {
 						this.publish(`${this.argv.topic}/${name}/${key}`, quote[key]);
@@ -148,18 +145,15 @@ class App {
 							this.log(`Added symbol ${args.name}:${JSON.stringify(config)}...`);
 							this.entries[args.name] = {symbol:config.symbol, name:args.name, quote:{}};
 
-							this.timer.setTimer(1000, () => {
-								this.update();
+							this.timer.setTimer(2000, async () => {
+								await this.fetch();
+								this.publishQuotes();
 							});
 						}
 						catch(error) {
 							throw new Error(`Invalid configuration "${message}".`);
 						}
-		
-	
 					}
-
-	
 				}
 				catch(error) {
 					this.log(error);
