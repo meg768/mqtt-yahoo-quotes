@@ -88,6 +88,7 @@ class App {
 
 	async loop() {
 		await this.fetch();	 
+		this.publishChanges();
 		setTimeout(this.loop.bind(this), 1000 * 60 * 15);
 	}
 
@@ -98,7 +99,7 @@ class App {
 	}
 
 
-	publishQuotes() {
+	publishChanges() {
 
 		Object.keys(this.entries).forEach((name) => {
 			let entry = this.entries[name];
@@ -147,7 +148,7 @@ class App {
 
 							this.timer.setTimer(2000, async () => {
 								await this.fetch();
-								this.publishQuotes();
+								this.publishChanges();
 							});
 						}
 						catch(error) {
