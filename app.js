@@ -20,9 +20,10 @@ class App {
 		yargs.option('host',     {describe:'Specifies MQTT host', default:process.env.MQTT_HOST});
 		yargs.option('password', {describe:'Password for MQTT broker', default:process.env.MQTT_PASSWORD});
 		yargs.option('username', {describe:'User name for MQTT broker', default:process.env.MQTT_USERNAME});
-		yargs.option('port',     {describe:'Port for MQTT', default:process.env.MQTT_PORT});
-		yargs.option('topic',    {describe:'MQTT root topic', default:process.env.MQTT_TOPIC});
-		yargs.option('debug',    {describe:'Debug mode', type:'boolean', default:process.env.DEBUG == '1'});
+		yargs.option('port',     {describe:'Port for MQTT', type:'number', default:parseInt(process.env.MQTT_PORT) || 1883});
+		yargs.option('interval', {describe:'Poll interval in minutes', type:'number', default:parseInt(process.env.INTERVAL) || 15});
+		yargs.option('topic',    {describe:'MQTT root topic', default:process.env.MQTT_TOPIC || 'Yahoo Quotes'});
+		yargs.option('debug',    {describe:'Debug mode', type:'boolean', default:parseInt(process.env.DEBUG) || false});
 
 		yargs.help();
 		yargs.wrap(null);
@@ -34,8 +35,6 @@ class App {
 		this.argv    = yargs.argv;
 		this.log     = console.log;
 		this.debug   = this.argv.debug ? this.log : () => {};
-		this.quotes  = {};
-		this.config  = {};
 		this.timer   = new Timer();
 		this.entries = {};
 
@@ -81,15 +80,29 @@ class App {
 			symbols.push(this.entries[name].symbol);
 		});
 
-		this.quotes = await this.fetchQuotes(symbols); 
+		let quotes = await this.fetchQuotes(symbols); 
 
-	}
+		for (const [name, entry] of Object.entries(this.entries)) {
+			let quote = quotes[entry.symbol];
 
+			if (entry.quote == undefined || JSON.stringify(entry.quote) != JSON.stringify(quote)) {
+
+				this.debug(`Symbol ${entry.symbol} changed.`);
+
+				Object.keys(quote).forEach((key) => {
+					this.publish(`${this.argv.topic}/${name}/${key}`, quote[key]);
+				});
+
+				entry.quote = quote;
+			}
+
+		}
+
+	}	
 
 	async loop() {
 		await this.fetch();	 
-		this.publishChanges();
-		setTimeout(this.loop.bind(this), 1000 * 60 * 15);
+		setTimeout(this.loop.bind(this), 1000 * 60 * this.argv.interval);
 	}
 
 	publish(topic, value) {
@@ -97,29 +110,6 @@ class App {
 		this.debug(`Publishing ${topic}:${value}`);
 		this.mqtt.publish(topic, value, {retain:true});
 	}
-
-
-	publishChanges() {
-
-		Object.keys(this.entries).forEach((name) => {
-			let entry = this.entries[name];
-			let quote = this.quotes[entry.symbol];
-
-			if (quote != undefined) {
-				if (entry.quote == undefined || JSON.stringify(entry.quote) != JSON.stringify(quote)) {
-
-					this.debug(`Symbol ${entry.symbol} changed.`);
-
-					Object.keys(quote).forEach((key) => {
-						this.publish(`${this.argv.topic}/${name}/${key}`, quote[key]);
-					});
-
-					entry.quote = quote;
-				}
-			}
-		});
-	}
-
 
 	async run() {
 		try {
@@ -144,11 +134,10 @@ class App {
 						try {
 							let config = JSON.parse(message);
 							this.log(`Added symbol ${args.name}:${JSON.stringify(config)}...`);
-							this.entries[args.name] = {symbol:config.symbol, name:args.name, quote:{}};
+							this.entries[args.name] = {symbol:config.symbol, name:args.name};
 
 							this.timer.setTimer(2000, async () => {
 								await this.fetch();
-								this.publishChanges();
 							});
 						}
 						catch(error) {
