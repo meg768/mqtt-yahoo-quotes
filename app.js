@@ -57,9 +57,9 @@ class App {
 		let quotes = {};
 
 		symbols.forEach((symbol) => {
-			var {quoteType:type, currency:currency, marketState:state, regularMarketChangePercent:change, regularMarketTime:time, regularMarketPrice:price, shortName:name} = data[symbol].price;
+			var {quoteType:type, currency:currency, marketState:market, regularMarketChangePercent:change, regularMarketTime:time, regularMarketPrice:price, shortName:name} = data[symbol].price;
 
-			var quote = {symbol:symbol, type:type, currency:currency, state:state, change:change * 100, price:price, name:name, time:time};
+			var quote = {symbol:symbol, type:type, currency:currency, market:market, change:change * 100, price:price, name:name, time:time};
 
 			// Round change in percent
 			quote.change = Math.floor(quote.change * 10 + 0.5) / 10;
@@ -85,16 +85,13 @@ class App {
 		for (const [name, entry] of Object.entries(this.entries)) {
 			let quote = quotes[entry.symbol];
 
-			if (entry.quote == undefined || JSON.stringify(entry.quote) != JSON.stringify(quote)) {
 
-				this.debug(`Symbol ${entry.symbol} changed.`);
-
-				Object.keys(quote).forEach((key) => {
+			Object.keys(quote).forEach((key) => {
+				if (entry.quote == undefined || quote[key] != entry.quote[key])
 					this.publish(`${this.argv.topic}/${name}/${key}`, quote[key]);
-				});
+			});
 
-				entry.quote = quote;
-			}
+			entry.quote = quote;
 
 		}
 
