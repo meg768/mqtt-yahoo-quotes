@@ -98,8 +98,15 @@ class App {
 	}	
 
 	async loop() {
-		await this.fetch();	 
-		setTimeout(this.loop.bind(this), 1000 * 60 * this.argv.interval);
+		try {
+			await this.fetch();
+		}
+		catch (error) {
+			this.log(error);
+		}
+		finally {
+			setTimeout(this.loop.bind(this), 1000 * 60 * this.argv.interval);
+		}
 	}
 
 	publish(topic, value) {
