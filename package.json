@@ -20,9 +20,9 @@
   "homepage": "https://github.com/meg768/mqtt-yahoo-quotes#readme",
   "dependencies": {
     "dotenv": "^8.2.0",
-    "mqtt-ex": "^1.0.6",
+    "mqtt": "^4.3.7",
     "yahoo-finance": "^0.3.7",
     "yargs": "^16.2.0",
-    "yow": "^1.0.108"
+    "yow": "^1.0.114"
   }
 }
