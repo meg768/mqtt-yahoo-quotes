@@ -62,7 +62,7 @@ class App {
 		symbols.forEach((symbol) => {
 			let {quoteType:type, currency:currency, marketState:market, regularMarketChangePercent:change, regularMarketTime:date, regularMarketPrice:price, shortName:name} = data[symbol].price;
 
-			let quote = {symbol:symbol, date:date, name:name, type:type, currency:currency, market:market, change:change * 100, price:price};
+			let quote = {date:date, symbol:symbol, name:name, type:type, currency:currency, market:market, change:change * 100, price:price};
 
 			// Round change in percent
 			quote.change = Math.floor(quote.change * 10 + 0.5) / 10;
